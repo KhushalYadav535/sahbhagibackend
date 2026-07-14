@@ -161,6 +161,44 @@ router.delete('/:id', protect, async (req, res) => {
   }
 });
 
+// @route   POST /api/events/:id/questions
+// @desc    Submit a question
+// @access  Public
+router.post('/:id/questions', [
+  body('text', 'Question text is required').not().isEmpty()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    const { text, author, isAnonymous } = req.body;
+    
+    const question = new Question({
+      text,
+      author: author || 'Anonymous',
+      isAnonymous: isAnonymous || false,
+      event: event._id
+    });
+
+    await question.save();
+
+    event.questions.push(question._id);
+    await event.save();
+
+    res.status(201).json(question);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 // @route   PATCH /api/events/:id/questions/:questionId
 // @desc    Update question approval status
 // @access  Private
