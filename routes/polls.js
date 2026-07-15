@@ -152,4 +152,29 @@ router.patch('/:id/responses/:responseId/react', async (req, res) => {
   }
 });
 
+// @route   DELETE /api/polls/:id
+// @desc    Delete poll
+// @access  Private
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    const poll = await Poll.findById(req.params.id);
+    if (!poll) {
+      return res.status(404).json({ message: 'Poll not found' });
+    }
+
+    const event = await Event.findById(poll.event);
+    if (event.host.toString() !== req.user.id) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    await Poll.findByIdAndDelete(req.params.id);
+    await Event.findByIdAndUpdate(poll.event, { $pull: { polls: poll._id } });
+
+    res.json({ message: 'Poll removed' });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;

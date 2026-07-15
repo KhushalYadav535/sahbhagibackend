@@ -37,6 +37,10 @@ const pollSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isLocked: {
+    type: Boolean,
+    default: false
+  },
   startTime: {
     type: Date
   },
